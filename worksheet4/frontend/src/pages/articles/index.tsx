@@ -17,7 +17,7 @@ const Articles: NextPage<{ initialArticles?: Article[] }> = ({ initialArticles }
           const data = await res.json();
 
           // 映射后端数据到前端 Article 类型
-          const mappedArticles = data.map((item: any) => ({
+          const mappedArticles = data.map((item: Article) => ({
             id: item.customId,
             title: item.title,
             authors: item.authors,
@@ -38,8 +38,7 @@ const Articles: NextPage<{ initialArticles?: Article[] }> = ({ initialArticles }
 
       fetchArticles();
     }
-  }, []); // 👈 关键：空依赖数组，只运行一次
-
+  }, [initialArticles]);
   const headers: { key: string; label: string }[] = [
     { key: "title", label: "Title" },
     { key: "authors", label: "Authors" },
