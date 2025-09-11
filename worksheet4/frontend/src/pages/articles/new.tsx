@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import formStyles from "../../styles/Form.module.scss";
-import { CreateArticleDto } from "./article.types";
+import { CreateArticleDto } from "../../types/article.types";
 
 const NewDiscussion = () => {
   // 根据后端 CreateArticleDto 定义状态
