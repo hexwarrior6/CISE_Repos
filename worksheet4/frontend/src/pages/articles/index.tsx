@@ -7,37 +7,38 @@ const Articles: NextPage<{ initialArticles?: Article[] }> = ({ initialArticles }
   const [articles, setArticles] = useState<Article[]>(initialArticles || []);
   const [loading, setLoading] = useState(!initialArticles);
 
+  // 只在组件首次挂载且无初始数据时获取
   useEffect(() => {
     if (!initialArticles) {
+      const fetchArticles = async () => {
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/articles`);
+          if (!res.ok) throw new Error('Failed to fetch articles');
+          const data = await res.json();
+
+          // 映射后端数据到前端 Article 类型
+          const mappedArticles = data.map((item: any) => ({
+            id: item.customId,
+            title: item.title,
+            authors: item.authors,
+            source: item.source,
+            pubyear: item.pubyear,
+            doi: item.doi,
+            claim: item.claim,
+            evidence: item.evidence,
+          }));
+
+          setArticles(mappedArticles);
+        } catch (error) {
+          console.error("Error fetching articles:", error);
+        } finally {
+          setLoading(false);
+        }
+      };
+
       fetchArticles();
     }
-  });
-
-  const fetchArticles = async () => {
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/articles`);
-      if (!res.ok) throw new Error('Failed to fetch articles');
-      const data = await res.json();
-
-      // 映射后端数据到前端 Article 类型
-      const mappedArticles = data.map((item: Article) => ({
-        id: item.customId, 
-        title: item.title,
-        authors: item.authors,
-        source: item.source,
-        pubyear: item.pubyear,
-        doi: item.doi,
-        claim: item.claim,
-        evidence: item.evidence,
-      }));
-
-      setArticles(mappedArticles);
-    } catch (error) {
-      console.error("Error fetching articles:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, []); // 👈 关键：空依赖数组，只运行一次
 
   const headers: { key: string; label: string }[] = [
     { key: "title", label: "Title" },
