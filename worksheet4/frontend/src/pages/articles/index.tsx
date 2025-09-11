@@ -1,0 +1,66 @@
+import { NextPage, GetServerSideProps } from "next"; // 如果你想用 SSR，可以用 GetServerSideProps
+import { useEffect, useState } from "react";
+import SortableTable from "../../components/table/SortableTable";
+import { Article } from "./article.types";
+
+const Articles: NextPage<{ initialArticles?: Article[] }> = ({ initialArticles }) => {
+  const [articles, setArticles] = useState<Article[]>(initialArticles || []);
+  const [loading, setLoading] = useState(!initialArticles);
+
+  // 如果是客户端获取数据
+  useEffect(() => {
+    if (!initialArticles) {
+      fetchArticles();
+    }
+  }, []);
+
+  const fetchArticles = async () => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/articles`);
+      if (!res.ok) throw new Error('Failed to fetch articles');
+      const data = await res.json();
+
+      // 映射后端数据到前端 Article 类型
+      const mappedArticles = data.map((item: any) => ({
+        id: item.customId || item._id, // 优先使用 customId，兼容 _id
+        title: item.title,
+        authors: item.authors,
+        source: item.source,
+        pubyear: item.pubyear,
+        doi: item.doi,
+        claim: item.claim,
+        evidence: item.evidence,
+      }));
+
+      setArticles(mappedArticles);
+    } catch (error) {
+      console.error("Error fetching articles:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const headers: { key: string; label: string }[] = [
+    { key: "title", label: "Title" },
+    { key: "authors", label: "Authors" },
+    { key: "source", label: "Source" },
+    { key: "pubyear", label: "Publication Year" },
+    { key: "doi", label: "DOI" },
+    { key: "claim", label: "Claim" },
+    { key: "evidence", label: "Evidence" },
+  ];
+
+  if (loading) {
+    return <div className="container">Loading articles...</div>;
+  }
+
+  return (
+    <div className="container">
+      <h1>Articles Index Page</h1>
+      <p>Page containing a table of articles:</p>
+      <SortableTable headers={headers} data={articles} />
+    </div>
+  );
+};
+
+export default Articles;
