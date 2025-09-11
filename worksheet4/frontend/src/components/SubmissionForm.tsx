@@ -1,13 +1,14 @@
+import { Article } from "@/types/article.types";
 import React from "react";
 import { useForm } from "react-hook-form";
 
 export default function SubmissionForm() {
   const { register, handleSubmit } = useForm();
 
-  const onSubmit = (data: any) => JSON.stringify(data);
+  const onSubmit = (data: Article) => JSON.stringify(data);
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
+    <form onSubmit={handleSubmit((data) => onSubmit(data as Article))}>
       <input {...register("title")} placeholder="Title" />
       <p>
         <input {...register("authors")} placeholder="Authors" />

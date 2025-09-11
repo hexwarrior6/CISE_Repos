@@ -1,18 +1,17 @@
-import { NextPage, GetServerSideProps } from "next"; // 如果你想用 SSR，可以用 GetServerSideProps
+import { NextPage } from "next";
 import { useEffect, useState } from "react";
 import SortableTable from "../../components/table/SortableTable";
-import { Article } from "./article.types";
+import { Article } from "../../types/article.types";
 
 const Articles: NextPage<{ initialArticles?: Article[] }> = ({ initialArticles }) => {
   const [articles, setArticles] = useState<Article[]>(initialArticles || []);
   const [loading, setLoading] = useState(!initialArticles);
 
-  // 如果是客户端获取数据
   useEffect(() => {
     if (!initialArticles) {
       fetchArticles();
     }
-  }, []);
+  });
 
   const fetchArticles = async () => {
     try {
@@ -21,8 +20,8 @@ const Articles: NextPage<{ initialArticles?: Article[] }> = ({ initialArticles }
       const data = await res.json();
 
       // 映射后端数据到前端 Article 类型
-      const mappedArticles = data.map((item: any) => ({
-        id: item.customId || item._id, // 优先使用 customId，兼容 _id
+      const mappedArticles = data.map((item: Article) => ({
+        id: item.customId, 
         title: item.title,
         authors: item.authors,
         source: item.source,

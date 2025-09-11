@@ -2,7 +2,7 @@
 
 // 用于前端显示和表单提交的 Article 接口
 export interface Article {
-  id: string; // 前端统一使用 id
+  customId: string; // 前端统一使用 id
   title: string;
   authors: string; // 注意：根据你的后端，authors 是字符串，不是数组
   source: string;
