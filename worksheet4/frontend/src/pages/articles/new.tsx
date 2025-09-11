@@ -1,55 +1,79 @@
+// pages/articles/new.tsx (或你当前 NewDiscussion 组件的路径)
+
 import { FormEvent, useState } from "react";
 import formStyles from "../../styles/Form.module.scss";
+import { CreateArticleDto } from "./article.types";
 
 const NewDiscussion = () => {
+  // 根据后端 CreateArticleDto 定义状态
+  const [customId, setCustomId] = useState("");
   const [title, setTitle] = useState("");
-  const [authors, setAuthors] = useState<string[]>([]);
+  const [authors, setAuthors] = useState(""); // 改为字符串，不是数组
   const [source, setSource] = useState("");
-  const [pubYear, setPubYear] = useState<number>(0);
+  const [pubYear, setPubYear] = useState(""); // 改为字符串，与后端一致
   const [doi, setDoi] = useState("");
-  const [summary, setSummary] = useState("");
-  const [linkedDiscussion, setLinkedDiscussion] = useState("");
+  const [claim, setClaim] = useState(""); // 新增 claim 字段
+  const [evidence, setEvidence] = useState(""); // 新增 evidence 字段
 
   const submitNewArticle = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    console.log(
-      JSON.stringify({
-        title,
-        authors,
-        source,
-        publication_year: pubYear,
-        doi,
-        summary,
-        linked_discussion: linkedDiscussion,
-      })
-    );
+    const newArticle: CreateArticleDto = {
+      customId,
+      title,
+      authors,
+      source,
+      pubyear: pubYear, // 注意字段名是 pubyear
+      doi,
+      claim,
+      evidence,
+    };
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/articles`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newArticle),
+      });
+
+      if (response.ok) {
+        alert('Article submitted successfully!');
+        // 清空表单
+        setCustomId("");
+        setTitle("");
+        setAuthors("");
+        setSource("");
+        setPubYear("");
+        setDoi("");
+        setClaim("");
+        setEvidence("");
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to submit: ${errorData.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error submitting article:', error);
+      alert('Network error. Please try again.');
+    }
   };
-
-  // Some helper methods for the authors array
-
-  const addAuthor = () => {
-    setAuthors(authors.concat([""]));
-  };
-
-  const removeAuthor = (index: number) => {
-    setAuthors(authors.filter((_, i) => i !== index));
-  };
-
-  const changeAuthor = (index: number, value: string) => {
-    setAuthors(
-      authors.map((oldValue, i) => {
-        return index === i ? value : oldValue;
-      })
-    );
-  };
-
-  // Return the full form
 
   return (
     <div className="container">
       <h1>New Article</h1>
       <form className={formStyles.form} onSubmit={submitNewArticle}>
+        <label htmlFor="customId">Custom ID:</label>
+        <input
+          className={formStyles.formItem}
+          type="text"
+          name="customId"
+          id="customId"
+          value={customId}
+          onChange={(event) => setCustomId(event.target.value)}
+          required
+        />
+
         <label htmlFor="title">Title:</label>
         <input
           className={formStyles.formItem}
@@ -57,41 +81,21 @@ const NewDiscussion = () => {
           name="title"
           id="title"
           value={title}
-          onChange={(event) => {
-            setTitle(event.target.value);
-          }}
+          onChange={(event) => setTitle(event.target.value)}
+          required
         />
 
-        <label htmlFor="author">Authors:</label>
-        {authors.map((author, index) => {
-          return (
-            <div key={`author ${index}`} className={formStyles.arrayItem}>
-              <input
-                type="text"
-                name="author"
-                value={author}
-                onChange={(event) => changeAuthor(index, event.target.value)}
-                className={formStyles.formItem}
-              />
-              <button
-                onClick={() => removeAuthor(index)}
-                className={formStyles.buttonItem}
-                style={{ marginLeft: "3rem" }}
-                type="button"
-              >
-                -
-              </button>
-            </div>
-          );
-        })}
-        <button
-          onClick={() => addAuthor()}
-          className={formStyles.buttonItem}
-          style={{ marginLeft: "auto" }}
-          type="button"
-        >
-          +
-        </button>
+        <label htmlFor="authors">Authors (comma-separated):</label>
+        <input
+          className={formStyles.formItem}
+          type="text"
+          name="authors"
+          id="authors"
+          value={authors}
+          onChange={(event) => setAuthors(event.target.value)}
+          placeholder="e.g., Siniaalto, M., Abrahamsson, P."
+          required
+        />
 
         <label htmlFor="source">Source:</label>
         <input
@@ -100,26 +104,19 @@ const NewDiscussion = () => {
           name="source"
           id="source"
           value={source}
-          onChange={(event) => {
-            setSource(event.target.value);
-          }}
+          onChange={(event) => setSource(event.target.value)}
+          required
         />
 
         <label htmlFor="pubYear">Publication Year:</label>
         <input
           className={formStyles.formItem}
-          type="number"
+          type="text" // 使用 text 类型，因为后端是 string
           name="pubYear"
           id="pubYear"
           value={pubYear}
-          onChange={(event) => {
-            const val = event.target.value;
-            if (val === "") {
-              setPubYear(0);
-            } else {
-              setPubYear(parseInt(val));
-            }
-          }}
+          onChange={(event) => setPubYear(event.target.value)}
+          required
         />
 
         <label htmlFor="doi">DOI:</label>
@@ -129,17 +126,30 @@ const NewDiscussion = () => {
           name="doi"
           id="doi"
           value={doi}
-          onChange={(event) => {
-            setDoi(event.target.value);
-          }}
+          onChange={(event) => setDoi(event.target.value)}
+          required
         />
 
-        <label htmlFor="summary">Summary:</label>
-        <textarea
-          className={formStyles.formTextArea}
-          name="summary"
-          value={summary}
-          onChange={(event) => setSummary(event.target.value)}
+        <label htmlFor="claim">Claim:</label>
+        <input
+          className={formStyles.formItem}
+          type="text"
+          name="claim"
+          id="claim"
+          value={claim}
+          onChange={(event) => setClaim(event.target.value)}
+          required
+        />
+
+        <label htmlFor="evidence">Evidence:</label>
+        <input
+          className={formStyles.formItem}
+          type="text"
+          name="evidence"
+          id="evidence"
+          value={evidence}
+          onChange={(event) => setEvidence(event.target.value)}
+          required
         />
 
         <button className={formStyles.formItem} type="submit">

@@ -1,24 +1,46 @@
-import { GetStaticProps, NextPage } from "next";
+import { NextPage, GetServerSideProps } from "next"; // 如果你想用 SSR，可以用 GetServerSideProps
+import { useEffect, useState } from "react";
 import SortableTable from "../../components/table/SortableTable";
-import data from "../../utils/dummydata";
+import { Article } from "./article.types";
 
-interface ArticlesInterface {
-  id: string;
-  title: string;
-  authors: string;
-  source: string;
-  pubyear: string;
-  doi: string;
-  claim: string;
-  evidence: string;
-}
+const Articles: NextPage<{ initialArticles?: Article[] }> = ({ initialArticles }) => {
+  const [articles, setArticles] = useState<Article[]>(initialArticles || []);
+  const [loading, setLoading] = useState(!initialArticles);
 
-type ArticlesProps = {
-  articles: ArticlesInterface[];
-};
+  // 如果是客户端获取数据
+  useEffect(() => {
+    if (!initialArticles) {
+      fetchArticles();
+    }
+  }, []);
 
-const Articles: NextPage<ArticlesProps> = ({ articles }) => {
-  const headers: { key: keyof ArticlesInterface; label: string }[] = [
+  const fetchArticles = async () => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/articles`);
+      if (!res.ok) throw new Error('Failed to fetch articles');
+      const data = await res.json();
+
+      // 映射后端数据到前端 Article 类型
+      const mappedArticles = data.map((item: any) => ({
+        id: item.customId || item._id, // 优先使用 customId，兼容 _id
+        title: item.title,
+        authors: item.authors,
+        source: item.source,
+        pubyear: item.pubyear,
+        doi: item.doi,
+        claim: item.claim,
+        evidence: item.evidence,
+      }));
+
+      setArticles(mappedArticles);
+    } catch (error) {
+      console.error("Error fetching articles:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const headers: { key: string; label: string }[] = [
     { key: "title", label: "Title" },
     { key: "authors", label: "Authors" },
     { key: "source", label: "Source" },
@@ -28,6 +50,10 @@ const Articles: NextPage<ArticlesProps> = ({ articles }) => {
     { key: "evidence", label: "Evidence" },
   ];
 
+  if (loading) {
+    return <div className="container">Loading articles...</div>;
+  }
+
   return (
     <div className="container">
       <h1>Articles Index Page</h1>
@@ -35,27 +61,6 @@ const Articles: NextPage<ArticlesProps> = ({ articles }) => {
       <SortableTable headers={headers} data={articles} />
     </div>
   );
-};
-
-export const getStaticProps: GetStaticProps<ArticlesProps> = async (_) => {
-  // Map the data to ensure all articles have consistent property names
-  const articles = data.map((article) => ({
-    id: article.id ?? article._id,
-    title: article.title,
-    authors: article.authors,
-    source: article.source,
-    pubyear: article.pubyear,
-    doi: article.doi,
-    claim: article.claim,
-    evidence: article.evidence,
-  }));
-
-
-  return {
-    props: {
-      articles,
-    },
-  };
 };
 
 export default Articles;
