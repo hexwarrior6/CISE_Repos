@@ -7,11 +7,11 @@ interface SortableTableProps {
 }
 
 const SortableTable: React.FC<SortableTableProps> = ({ headers, data }) => (
-  <table>
+  <table style={{ borderCollapse: 'collapse', width: '100%', border: '1px solid black' }}>
     <thead>
       <tr>
         {headers.map((header) => (
-          <th key={header.key}>{header.label}</th>
+          <th key={header.key} style={{ border: '1px solid black', padding: '8px' }}>{header.label}</th>
         ))}
       </tr>
     </thead>
@@ -19,7 +19,9 @@ const SortableTable: React.FC<SortableTableProps> = ({ headers, data }) => (
       {data.map((row, i) => (
         <tr key={i}>
           {headers.map((header) => (
-            <td key={header.key}>{row[header.key as keyof Article]}</td>
+            <td key={header.key} style={{ border: '1px solid black', padding: '8px' }}>
+              {row[header.key as keyof Article]}
+            </td>
           ))}
         </tr>
       ))}
